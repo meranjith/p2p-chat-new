@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>I Said I Love You First</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background-color: #2b0e0e;
+      font-family: 'Gloria Hallelujah', cursive;
+      overflow: auto; /* ✅ allows content to adjust */
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .background-template {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -60%); /* ✅ moved down */
+      text-align: center;
+      color: #e05757;
+      z-index: 0;
+      user-select: none;
+      pointer-events: none;
+      opacity: 1;
+    }
+
+    .background-template .heart {
+      font-size: 140px;
+      margin-bottom: 10px;
+    }
+
+    .background-template .stacked-text {
+      font-size: 28px;
+      line-height: 1.4;
+      white-space: pre-line;
+    }
+
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px 20px;
+      background-color: rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 1;
+    }
+
+    .msg {
+      max-width: 80%;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 16px;
+      word-wrap: break-word;
+      backdrop-filter: blur(2px);
+      font-family: initial;
+    }
+
+    .sender {
+      align-self: flex-end;
+      background-color: #e05757;
+      color: white;
+      border-bottom-right-radius: 0;
+    }
+
+    .receiver {
+      align-self: flex-start;
+      background-color: #3d1c1c;
+      color: #fff;
+      border-bottom-left-radius: 0;
+    }
+
+    .input-row {
+  display: flex;
+  flex-wrap: nowrap; /* Prevent wrapping */
+  align-items: center;
+  padding: 10px;
+  background-color: #1a0606;
+  border-top: 2px solid #3a1a1a;
+  gap: 10px;
+  z-index: 1;
+}
+
+input {
+  flex-grow: 1;       /* Take remaining space */
+  min-width: 0;       /* Allow shrinking */
+  padding: 10px;
+  font-size: 16px;
+  background-color: #3a1a1a;
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+
+button {
+  flex-shrink: 0;     /* Prevent shrinking */
+  width: 80px;        /* Fixed width for consistency */
+  background-color: #e05757;
+  color: white;
+  border: none;
+  padding: 10px 0;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+    button:hover {
+      background-color: #b13f3f;
+    }
+
+    /* ✅ Optional: For better handling on very small screens */
+    @media (max-width: 400px) {
+      .background-template .heart {
+        font-size: 100px;
+      }
+
+      .background-template .stacked-text {
+        font-size: 20px;
+      }
+
+      .msg {
+        font-size: 15px;
+        max-width: 90%;
+      }
+
+      input {
+        font-size: 15px;
+      }
+
+      button {
+        font-size: 15px;
+        padding: 10px 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 🔴 Heart + Message -->
+  <div class="background-template">
+    <div class="heart">❤️</div>
+    <div class="stacked-text">
+      I<br>
+      SAID<br>
+      I<br>
+      LOVE<br>
+      YOU<br>
+      FIRST
+    </div>
+  </div>
+
+  <!-- 💬 Chat Window -->
+  <div id="chat"></div>
+
+  <!-- 🖊 Input and Button -->
+  <div class="input-row">
+    <input id="msg" placeholder="Type your message..." />
+    <button onclick="send()">Send</button>
+  </div>
+
+  <script>
+    const room = "room123";
+    const project = "mysecretchat";
+    const ws = new WebSocket(`wss://ws.futureforce.ee/?p=${project}&r=${room}`);
+
+    const chat = document.getElementById('chat');
+    const input = document.getElementById('msg');
+    const sessionId = Math.random().toString(36).substr(2, 9);
+
+    ws.onmessage = e => {
+      try {
+        const data = JSON.parse(e.data);
+        addMessage(data.text, data.id === sessionId ? 'sender' : 'receiver');
+      } catch {
+        addMessage(e.data, 'receiver');
+      }
+    };
+
+    function send() {
+      const text = input.value.trim();
+      if (!text) return;
+      const message = { text, id: sessionId };
+      ws.send(JSON.stringify(message));
+      addMessage(text, 'sender');
+      input.value = '';
+    }
+
+    function addMessage(text, type) {
+      const msg = document.createElement("div");
+      msg.className = `msg ${type}`;
+      msg.textContent = text;
+      chat.appendChild(msg);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    input.addEventListener("keydown", e => {
+      if (e.key === "Enter") send();
+    });
+  </script>
+</body>
+</html>
